@@ -10,3 +10,6 @@ export { default as Input } from "./components/Input";
 export { default as Card } from "./components/Card";
 export { default as Divider } from "./components/Divider";
 export { default as ThemeToggle } from "./components/ThemeToggle";
+
+export { default as SidebarLayout } from "./layouts/SidebarLayout";
+export type { SidebarItem } from "./layouts/SidebarLayout";

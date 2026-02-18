@@ -30,3 +30,29 @@ export function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path
+        d="M4 6h16M4 12h16M4 18h16"
+        className="stroke-current"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function XIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path
+        d="M6 6l12 12M18 6 6 18"
+        className="stroke-current"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
