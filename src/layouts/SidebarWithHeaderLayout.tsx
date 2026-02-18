@@ -41,6 +41,7 @@ const SidebarWithHeaderLayout: React.FC<Props> = ({
   children,
 }) => {
   const [q, setQ] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -51,59 +52,104 @@ const SidebarWithHeaderLayout: React.FC<Props> = ({
   const settingsLink = filtered.find((l) => l.id === "settings");
   const mainLinks = filtered.filter((l) => l.id !== "settings");
 
+  function handleNavClick(link: SidebarLink) {
+    link.onClick?.();
+    setMobileOpen(false);
+  }
+
+  const SidebarContent = ({ mobile }: { mobile?: boolean }) => (
+    <div className="flex h-full w-72 flex-col bg-white px-4 py-5 dark:bg-zinc-950">
+      <div className="flex items-center justify-between">
+        {brand}
+        {mobile ? (
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            aria-label="Close sidebar"
+            title="Close"
+            onClick={() => setMobileOpen(false)}
+          >
+            <XIcon className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
+          </button>
+        ) : null}
+      </div>
+
+      <nav className="mt-8 flex-1 space-y-1">
+        {mainLinks.map((l) => (
+          <NavRow
+            key={l.id}
+            active={l.id === activeId}
+            label={l.label}
+            icon={l.icon}
+            href={l.href}
+            onClick={() => handleNavClick(l)}
+          />
+        ))}
+      </nav>
+
+      {/* Bottom: Settings */}
+      <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        {settingsLink ? (
+          <NavRow
+            active={settingsLink.id === activeId}
+            label={settingsLink.label}
+            icon={settingsLink.icon}
+            href={settingsLink.href}
+            onClick={() => handleNavClick(settingsLink)}
+          />
+        ) : (
+          <NavRow
+            active={activeId === "settings"}
+            label="Settings"
+            icon={<CogIcon className="h-5 w-5" />}
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <aside className="hidden w-72 flex-col border-r border-zinc-200 bg-white px-4 py-5 dark:border-zinc-800 dark:bg-zinc-950 lg:flex">
-          <div>{brand}</div>
-
-          <nav className="mt-8 flex-1 space-y-1">
-            {mainLinks.map((l) => (
-              <NavRow
-                key={l.id}
-                active={l.id === activeId}
-                label={l.label}
-                icon={l.icon}
-                href={l.href}
-                onClick={l.onClick}
-              />
-            ))}
-          </nav>
-
-          {/* Bottom: Settings */}
-          <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            {settingsLink ? (
-              <NavRow
-                active={settingsLink.id === activeId}
-                label={settingsLink.label}
-                icon={settingsLink.icon}
-                href={settingsLink.href}
-                onClick={settingsLink.onClick}
-              />
-            ) : (
-              <NavRow
-                active={activeId === "settings"}
-                label="Settings"
-                icon={<CogIcon className="h-5 w-5" />}
-                onClick={() => {}}
-              />
-            )}
-          </div>
+        {/* Sidebar desktop */}
+        <aside className="hidden w-72 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:flex">
+          <SidebarContent />
         </aside>
+
+        {/* Mobile drawer */}
+        {mobileOpen ? (
+          <div
+            className="fixed inset-0 z-50 lg:hidden"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* overlay */}
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* panel */}
+            <div className="absolute inset-y-0 left-0 w-72 border-r border-zinc-200 shadow-xl dark:border-zinc-800">
+              <SidebarContent mobile />
+            </div>
+          </div>
+        ) : null}
 
         {/* Main */}
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
           <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="flex items-center gap-3 px-4 py-4 lg:px-6">
-              {/* Mobile menu placeholder */}
+              {/* Mobile menu */}
               <div className="lg:hidden">
                 <button
                   type="button"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900"
-                  aria-label="Menu"
+                  aria-label="Open sidebar"
                   title="Menu"
+                  onClick={() => setMobileOpen(true)}
                 >
                   <MenuIcon className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
                 </button>
@@ -138,10 +184,10 @@ const SidebarWithHeaderLayout: React.FC<Props> = ({
                   <BellIcon className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
                 </button>
 
-                {/* Dark/Light toggle (aqui!) */}
+                {/* Dark/Light toggle */}
                 <ThemeToggle />
 
-                {/* Avatar top-right only */}
+                {/* Avatar (top-right only) */}
                 <button
                   type="button"
                   className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
@@ -186,7 +232,7 @@ const SidebarWithHeaderLayout: React.FC<Props> = ({
 
 export default SidebarWithHeaderLayout;
 
-/* ---------------- NavRow com azul no hover/active ---------------- */
+/* ---------------- NavRow (hover/active azul escuro) ---------------- */
 
 function NavRow({
   active,
@@ -204,7 +250,6 @@ function NavRow({
   const base =
     "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition";
 
-  // Azul escuro no light, azul claro no dark
   const activeCls =
     "bg-zinc-50 text-indigo-700 dark:bg-zinc-900/50 dark:text-indigo-300";
   const idleCls =
@@ -219,12 +264,7 @@ function NavRow({
   const content = (
     <>
       <span className={iconWrap}>
-        <span
-          className={[
-            "transition",
-            active ? "text-indigo-700 dark:text-indigo-300" : "",
-          ].join(" ")}
-        >
+        <span className={active ? "text-indigo-700 dark:text-indigo-300" : ""}>
           {icon ?? <span className="text-xs">•</span>}
         </span>
       </span>
@@ -274,7 +314,7 @@ function WaveIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
+function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
       <path
@@ -292,7 +332,7 @@ export function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function BellIcon(props: React.SVGProps<SVGSVGElement>) {
+function BellIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
       <path
@@ -311,7 +351,7 @@ export function BellIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function ChevronDownIcon(props: React.SVGProps<SVGSVGElement>) {
+function ChevronDownIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
       <path
@@ -325,7 +365,7 @@ export function ChevronDownIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
+function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
       <path
@@ -338,7 +378,20 @@ export function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function CogIcon(props: React.SVGProps<SVGSVGElement>) {
+function XIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path
+        d="M6 6l12 12M18 6 6 18"
+        className="stroke-current"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CogIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
       <path
