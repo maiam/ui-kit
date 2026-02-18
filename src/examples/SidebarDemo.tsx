@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import SidebarLayout from "../layouts/SidebarLayout";
 import type { SidebarItem } from "../layouts/SidebarLayout";
-
-function DotIcon() {
-  return <div className="h-2.5 w-2.5 rounded-full bg-current opacity-70" />;
-}
+import {
+  HomeIcon,
+  UsersIcon,
+  ChatIcon,
+  SettingsIcon,
+} from "../components/navIcons";
 
 export default function SidebarDemo() {
   const [active, setActive] = useState("home");
@@ -13,27 +15,31 @@ export default function SidebarDemo() {
     {
       id: "home",
       label: "Início",
-      icon: <DotIcon />,
+      icon: <HomeIcon className="h-5 w-5" />,
       onClick: () => setActive("home"),
+      section: "Geral",
     },
     {
       id: "contacts",
       label: "Contatos",
-      icon: <DotIcon />,
+      icon: <UsersIcon className="h-5 w-5" />,
       badge: "12",
       onClick: () => setActive("contacts"),
+      section: "Geral",
     },
     {
       id: "messages",
       label: "Mensagens",
-      icon: <DotIcon />,
+      icon: <ChatIcon className="h-5 w-5" />,
       onClick: () => setActive("messages"),
+      section: "Geral",
     },
     {
       id: "settings",
       label: "Configurações",
-      icon: <DotIcon />,
+      icon: <SettingsIcon className="h-5 w-5" />,
       onClick: () => setActive("settings"),
+      section: "Admin",
     },
   ];
 
@@ -49,25 +55,12 @@ export default function SidebarDemo() {
           Novo
         </button>
       }
-      userArea={
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-black/10 dark:bg-white/10" />
-          <div className="min-w-0">
-            <div className="truncate font-medium">Pedro</div>
-            <div className="truncate text-xs text-black/60 dark:text-white/60">
-              Admin
-            </div>
-          </div>
-        </div>
-      }
     >
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Conteúdo</h2>
-        <p className="text-sm text-black/60 dark:text-white/60">
-          Aqui entra o conteúdo da tela. O layout já entrega sidebar fixa no
-          desktop e drawer no mobile.
-        </p>
-      </div>
+      <h2 className="text-lg font-semibold">Tela: {active}</h2>
+      <p className="mt-2 text-sm text-black/60 dark:text-white/60">
+        Sidebar profissional com ícones, seções, busca e modo compacto
+        (Ctrl/⌘+B).
+      </p>
     </SidebarLayout>
   );
 }

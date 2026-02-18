@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ThemeToggle from "../components/ThemeToggle";
 import Button from "../components/Button";
+import NavItem from "../components/NavItem";
+import type { NavItemProps } from "../components/NavItem";
 import { MenuIcon, XIcon } from "../components/icons";
+import { SearchIcon } from "../components/navIcons";
 
 export type SidebarItem = {
   id: string;
@@ -10,15 +13,20 @@ export type SidebarItem = {
   onClick?: () => void;
   icon?: React.ReactNode;
   badge?: string;
+  section?: string; // ex: "Geral", "Admin"
 };
 
 type Props = {
-  brand?: React.ReactNode; // ex: "ui-kit" ou logo
-  userArea?: React.ReactNode; // ex: avatar + nome
+  brand?: React.ReactNode;
+  userArea?: React.ReactNode;
   items: SidebarItem[];
   activeId?: string;
-  headerRight?: React.ReactNode; // ex: botão "Novo"
+
+  headerRight?: React.ReactNode;
   children: React.ReactNode;
+
+  defaultCompact?: boolean; // rail mode inicial
+  showSearch?: boolean;
 };
 
 export default function SidebarLayout({
@@ -28,105 +36,179 @@ export default function SidebarLayout({
   activeId,
   headerRight,
   children,
+  defaultCompact = false,
+  showSearch = true,
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [compact, setCompact] = useState(defaultCompact);
+  const [query, setQuery] = useState("");
 
-  // fecha drawer ao apertar ESC
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setMobileOpen(false);
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b")
+        setCompact((v) => !v);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const nav = useMemo(() => {
-    return items.map((it) => {
-      const active = it.id === activeId;
-      const base =
-        "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition";
-      const style = active
-        ? "bg-black text-white dark:bg-white dark:text-black"
-        : "text-black/80 hover:bg-black/5 dark:text-white/80 dark:hover:bg-white/10";
+  const filteredItems = useMemo(() => {
+    if (!query.trim()) return items;
+    const q = query.toLowerCase();
+    return items.filter((i) => i.label.toLowerCase().includes(q));
+  }, [items, query]);
 
-      const content = (
-        <>
-          {it.icon ? (
-            <span className="grid h-5 w-5 place-items-center opacity-90">
-              {it.icon}
-            </span>
-          ) : (
-            <span className="h-2 w-2 rounded-full bg-current opacity-40" />
-          )}
-          <span className="flex-1 truncate">{it.label}</span>
-          {it.badge ? (
-            <span
+  const bySection = useMemo(() => {
+    const map = new Map<string, SidebarItem[]>();
+    for (const it of filteredItems) {
+      const key = it.section ?? "Geral";
+      map.set(key, [...(map.get(key) ?? []), it]);
+    }
+    return Array.from(map.entries());
+  }, [filteredItems]);
+
+  function renderNav(list: SidebarItem[], isCompact: boolean) {
+    return list.map((it) => {
+      const props: NavItemProps = {
+        active: it.id === activeId,
+        label: it.label,
+        badge: it.badge,
+        icon: it.icon,
+        compact: isCompact,
+        href: it.href,
+        onClick: it.onClick,
+      };
+      return <NavItem key={it.id} {...props} />;
+    });
+  }
+
+  const SidebarBody = ({ isCompact }: { isCompact: boolean }) => (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between">
+        <div
+          className={[
+            "flex items-center gap-2",
+            isCompact ? "justify-center" : "",
+          ].join(" ")}
+        >
+          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-black text-white dark:bg-white dark:text-black">
+            <span className="text-sm font-semibold">UI</span>
+          </div>
+          {!isCompact ? <div>{brand}</div> : null}
+        </div>
+
+        {!isCompact ? <ThemeToggle /> : null}
+      </div>
+
+      {showSearch && !isCompact ? (
+        <div className="mt-5">
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar..."
               className={[
-                "rounded-full px-2 py-0.5 text-[11px]",
-                active
-                  ? "bg-white/15 text-white dark:bg-black/10 dark:text-black"
-                  : "bg-black/5 text-black/70 dark:bg-white/10 dark:text-white/70",
+                "h-11 w-full rounded-xl border pl-9 pr-3 text-sm outline-none transition",
+                "bg-white text-black placeholder:text-black/40",
+                "dark:bg-black dark:text-white dark:placeholder:text-white/35",
+                "border-black/12 focus:border-black/30 focus:ring-2 focus:ring-black/10",
+                "dark:border-white/12 dark:focus:border-white/25 dark:focus:ring-white/10",
+              ].join(" ")}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-black/45 dark:text-white/45">
+            Dica: <span className="font-medium">Ctrl/⌘ + B</span> alterna modo
+            compacto
+          </p>
+        </div>
+      ) : null}
+
+      <div
+        className={["mt-6 flex-1 space-y-5", isCompact ? "mt-5" : ""].join(" ")}
+      >
+        {bySection.map(([section, list]) => (
+          <div key={section} className="space-y-2">
+            {!isCompact ? (
+              <div className="px-1 text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+                {section}
+              </div>
+            ) : null}
+            <div className="space-y-1">{renderNav(list, isCompact)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {/* toggle compact só no desktop */}
+        <div className="hidden lg:block">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            full
+            onClick={() => setCompact((v) => !v)}
+            className="justify-center"
+          >
+            {isCompact ? "Expandir" : "Compactar"}
+          </Button>
+        </div>
+
+        <div
+          className={[
+            "rounded-2xl border p-3",
+            "border-black/10 bg-white/60 dark:border-white/10 dark:bg-black/50",
+            isCompact ? "p-2" : "",
+          ].join(" ")}
+        >
+          {userArea ?? (
+            <div
+              className={[
+                "flex items-center gap-3",
+                isCompact ? "justify-center" : "",
               ].join(" ")}
             >
-              {it.badge}
-            </span>
-          ) : null}
-        </>
-      );
+              <div className="h-9 w-9 rounded-xl bg-black/10 dark:bg-white/10" />
+              {!isCompact ? (
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">Pedro</div>
+                  <div className="truncate text-xs text-black/60 dark:text-white/60">
+                    Admin
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
 
-      if (it.href) {
-        return (
-          <a key={it.id} href={it.href} className={[base, style].join(" ")}>
-            {content}
-          </a>
-        );
-      }
-
-      return (
-        <button
-          key={it.id}
-          type="button"
-          onClick={() => it.onClick?.()}
-          className={[base, style].join(" ")}
-        >
-          {content}
-        </button>
-      );
-    });
-  }, [items, activeId]);
+        {isCompact ? (
+          <div className="flex justify-center lg:hidden">
+            <ThemeToggle />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
       <div className="mx-auto flex min-h-screen max-w-7xl">
         {/* Sidebar desktop */}
-        <aside className="hidden w-72 border-r border-black/10 p-4 dark:border-white/10 lg:flex lg:flex-col">
-          <div className="flex items-center justify-between">
-            {brand}
-            <ThemeToggle />
-          </div>
-
-          <nav className="mt-6 space-y-1">{nav}</nav>
-
-          <div className="mt-auto pt-4">
-            <div className="rounded-2xl border border-black/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-black/50">
-              {userArea ?? (
-                <div className="space-y-1">
-                  <div className="font-medium">Admin</div>
-                  <div className="text-xs text-black/60 dark:text-white/60">
-                    pedro@exemplo.com
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+        <aside
+          className={[
+            "hidden border-r p-4 dark:border-white/10 lg:flex lg:flex-col",
+            "border-black/10",
+            compact ? "w-[92px]" : "w-80",
+          ].join(" ")}
+        >
+          <SidebarBody isCompact={compact} />
         </aside>
 
         {/* Conteúdo */}
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Topbar */}
           <header className="sticky top-0 z-20 border-b border-black/10 bg-white/70 backdrop-blur dark:border-white/10 dark:bg-black/60">
             <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
-              {/* botão mobile */}
               <Button
                 type="button"
                 variant="ghost"
@@ -142,7 +224,7 @@ export default function SidebarLayout({
               <div className="flex flex-1 items-center gap-3">
                 <div className="lg:hidden">{brand}</div>
                 <div className="hidden lg:block text-sm text-black/50 dark:text-white/50">
-                  {/* espaço pra breadcrumb ou descrição */}
+                  {/* breadcrumb / título da página */}
                 </div>
               </div>
 
@@ -155,7 +237,6 @@ export default function SidebarLayout({
             </div>
           </header>
 
-          {/* Main */}
           <main className="flex-1 p-4 lg:p-6">
             <div className="rounded-2xl border border-black/10 bg-white/60 p-4 dark:border-white/10 dark:bg-black/50 lg:p-6">
               {children}
@@ -171,7 +252,7 @@ export default function SidebarLayout({
             className="absolute inset-0 bg-black/40"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 w-[86%] max-w-sm border-r border-black/10 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-black">
+          <div className="absolute inset-y-0 left-0 w-[88%] max-w-sm border-r border-black/10 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-black">
             <div className="flex items-center justify-between">
               {brand}
               <Button
@@ -186,23 +267,10 @@ export default function SidebarLayout({
               </Button>
             </div>
 
-            <nav
-              className="mt-6 space-y-1"
-              onClick={() => setMobileOpen(false)}
-            >
-              {nav}
-            </nav>
-
-            <div className="mt-auto pt-4">
-              <div className="rounded-2xl border border-black/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-black/50">
-                {userArea ?? (
-                  <div className="space-y-1">
-                    <div className="font-medium">Admin</div>
-                    <div className="text-xs text-black/60 dark:text-white/60">
-                      pedro@exemplo.com
-                    </div>
-                  </div>
-                )}
+            <div className="mt-4 h-[calc(100vh-88px)]">
+              {/* no mobile sempre expandido */}
+              <div onClick={() => setMobileOpen(false)} className="h-full">
+                <SidebarBody isCompact={false} />
               </div>
             </div>
           </div>

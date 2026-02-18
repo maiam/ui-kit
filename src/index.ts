@@ -13,3 +13,8 @@ export { default as ThemeToggle } from "./components/ThemeToggle";
 
 export { default as SidebarLayout } from "./layouts/SidebarLayout";
 export type { SidebarItem } from "./layouts/SidebarLayout";
+
+export { default as NavItem } from "./components/NavItem";
+export type { NavItemProps } from "./components/NavItem";
+
+export * from "./components/navIcons";
