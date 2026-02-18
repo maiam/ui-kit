@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Ativa o dark:* quando existir a classe .dark em algum ancestral (ex: <html class="dark">) */
+@custom-variant dark (&:where(.dark, .dark *));
