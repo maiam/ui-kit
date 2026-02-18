@@ -5,6 +5,7 @@ import RegisterPage from "./auth/RegisterPage";
 import ForgotPasswordPage from "./auth/ForgotPasswordPage";
 import SidebarDemo from "./examples/SidebarDemo";
 import CatalystSidebarDemo from "./examples/CatalystSidebarDemo";
+import SidebarWithHeaderDemo from "./examples/SidebarWithHeaderDemo";
 
 export default function App() {
   return (
@@ -15,6 +16,10 @@ export default function App() {
         <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
         <Route path="/examples/sidebar" element={<SidebarDemo />} />
+        <Route
+          path="/examples/sidebar-with-header"
+          element={<SidebarWithHeaderDemo />}
+        />
         <Route
           path="/examples/catalyst-sidebar"
           element={<CatalystSidebarDemo />}
